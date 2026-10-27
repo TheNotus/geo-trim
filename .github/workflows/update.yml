@@ -1,0 +1,24 @@
+name: update-geosite
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download and trim
+        run: |
+          curl -fL -o /tmp/geosite.dat https://github.com/runetfreedom/russia-v2ray-rules-dat/releases/latest/download/geosite.dat
+          python3 trim_geosite.py /tmp/geosite.dat geosite.dat
+          curl -fL -o geoip.dat https://github.com/runetfreedom/russia-v2ray-rules-dat/releases/latest/download/geoip.dat
+          ls -l geosite.dat geoip.dat
+      - name: Commit
+        run: |
+          git config user.name "bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add geosite.dat geoip.dat
+          git diff --cached --quiet || (git commit -m "update geo files" && git push)
